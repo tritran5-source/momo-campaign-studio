@@ -30,17 +30,15 @@ st.set_page_config(page_title="MoMo Campaign Studio", page_icon="🎯", layout="
 st.markdown(
     "<h1 style='color:#D6218C;margin-bottom:0'>🎯 MoMo Campaign Studio</h1>"
     "<p style='color:#6B6B70;margin-top:4px'>Gõ tên sản phẩm/tính năng MoMo → nhận research thị trường, "
-    "slogan và báo cáo campaign. Không cần mở notebook.</p>",
+    "slogan và báo cáo campaign.</p>",
     unsafe_allow_html=True,
 )
 
 # ---- Input: user TỰ NHẬP tên sản phẩm ----
-examples = ", ".join(tools.product_catalog_tool(p)["display_name"] for p in tools.list_products())
 product_name = st.text_input(
     "Tên sản phẩm / tính năng MoMo",
     placeholder="VD: Ví Trả Sau, Chuyển tiền, Túi Thần Tài, Đầu tư, Tiết kiệm...",
 )
-st.caption(f"Gợi ý có sẵn bối cảnh nội bộ: {examples}. Sản phẩm khác vẫn chạy được (tự research từ web).")
 
 if st.button("🚀 Tạo Campaign", type="primary", use_container_width=True):
     if not product_name.strip():
