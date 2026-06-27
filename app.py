@@ -89,9 +89,3 @@ if r:
         st.subheader("3. Copywriter Agent")
         st.markdown(f"**Slogan:** {r['quote']}")
         st.caption(r["justification"])
-
-st.markdown(
-    "<hr><p style='color:#8A8A8F;font-size:0.8em'>Backend: Gemini free tier. "
-    "Ảnh tạo thủ công (free tier không sinh ảnh). Brand: Home Mới #D6218C.</p>",
-    unsafe_allow_html=True,
-)
