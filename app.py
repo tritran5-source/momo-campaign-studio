@@ -292,61 +292,90 @@ function doCopy() {{
 
         # ── Tab 3: Key Pillars ──────────────────────────────────────────────────
         with tab3:
+            import json as _json
+
+            def _notes_items(val):
+                """Parse copy_notes dù AI trả về list, JSON array, hay multiline string."""
+                if isinstance(val, list):
+                    return [str(x).strip() for x in val if str(x).strip()]
+                s = str(val or "").strip()
+                if s.startswith("["):
+                    try:
+                        parsed = _json.loads(s)
+                        if isinstance(parsed, list):
+                            return [str(x).strip() for x in parsed if str(x).strip()]
+                    except Exception:
+                        pass
+                return [ln.lstrip("•·-– ").strip() for ln in s.split("\n") if ln.strip()]
+
+            PILLAR_CFG = [
+                ("#FCE9F2", "#D6218C", "#B0186F"),
+                ("#EEF4FF", "#3B5BDB", "#2C46C2"),
+                ("#EFFFF5", "#12B886", "#0CA678"),
+            ]
+
             pillars = r.get("pillars") or []
             next_idx = st.session_state.get("pillar_refresh_index", 0)
-
-            PILLAR_COLORS = [
-                ("#FCE9F2", "#D6218C", "#B0186F"),  # pink
-                ("#EEF4FF", "#3B5BDB", "#2C46C2"),  # blue
-                ("#F0FFF6", "#12B886", "#0CA678"),  # green
-            ]
 
             if pillars:
                 cols = st.columns(3, gap="medium")
                 for i, (col, pillar) in enumerate(zip(cols, pillars)):
-                    bg, accent, dark = PILLAR_COLORS[i % len(PILLAR_COLORS)]
+                    bg, accent, dark = PILLAR_CFG[i % 3]
                     is_next = (i == next_idx)
-                    border = f"2.5px solid {accent}" if is_next else f"1.5px solid #ECECEF"
-                    ring = f"box-shadow:0 0 0 3px {accent}33,0 4px 16px rgba(0,0,0,.06);" if is_next else "box-shadow:0 4px 16px rgba(0,0,0,.04);"
-                    copy_notes_html = "".join(
-                        f'<li style="margin-bottom:4px;">{line.lstrip("•-– ").strip()}</li>'
-                        for line in str(pillar.get("copy_notes", "")).split("\n")
-                        if line.strip()
+                    left_bar = f"border-left:4px solid {accent};" if is_next else "border-left:4px solid #ECECEF;"
+                    items = _notes_items(pillar.get("copy_notes", ""))
+                    bullets_html = "".join(
+                        f'<div style="display:flex;gap:7px;margin-bottom:6px;">'
+                        f'<span style="color:{accent};font-weight:700;flex-shrink:0;margin-top:1px;">·</span>'
+                        f'<span style="font-size:12.5px;color:#3A3A3C;line-height:1.6;{FNT}">{item}</span>'
+                        f'</div>'
+                        for item in items
                     )
-                    next_label = f'<div style="font-size:10px;font-weight:700;color:{accent};text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;{FNT}">🔄 refresh tiếp theo</div>' if is_next else ""
+                    next_dot = (
+                        f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;'
+                        f'background:{accent};margin-left:6px;vertical-align:middle;"></span>'
+                    ) if is_next else ""
+
                     col.markdown(f"""
-                    <div style="background:#fff;border-radius:18px;padding:20px 18px 18px;
-                                border:{border};{ring}min-height:260px;">
-                      {next_label}
-                      <div style="display:inline-block;font-size:10px;font-weight:700;color:{accent};
-                                  background:{bg};padding:4px 10px;border-radius:999px;
-                                  text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;{FNT}">
-                        Pillar {i+1}
-                      </div>
-                      <p style="margin:0 0 6px;font-size:15px;font-weight:800;color:#1C1C1E;{FNT}">
-                        {pillar.get('title','')}
-                      </p>
-                      <p style="margin:0 0 12px;font-size:13px;color:#6B6B70;line-height:1.5;{FNT}">
-                        {pillar.get('angle','')}
-                      </p>
-                      <div style="background:{bg};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
-                        <div style="font-size:10px;font-weight:700;color:{dark};
-                                    text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;{FNT}">
-                          Hook mẫu
+                    <div style="background:#fff;border-radius:16px;padding:0;
+                                overflow:hidden;border:1.5px solid #ECECEF;
+                                box-shadow:0 2px 12px rgba(0,0,0,.05);{left_bar}">
+                      <!-- top accent bar -->
+                      <div style="background:{bg};padding:14px 16px 12px;">
+                        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
+                          <span style="font-size:10px;font-weight:700;color:{dark};
+                                       text-transform:uppercase;letter-spacing:.6px;{FNT}">
+                            Pillar {i+1}
+                          </span>{next_dot}
                         </div>
-                        <p style="margin:0;font-size:13px;font-weight:600;color:{dark};
-                                  font-style:italic;line-height:1.4;{FNT}">
-                          "{pillar.get('hook','')}"
+                        <p style="margin:0;font-size:15px;font-weight:800;
+                                  color:{dark};line-height:1.3;{FNT}">
+                          {pillar.get("title", "")}
                         </p>
                       </div>
-                      <div style="font-size:10px;font-weight:700;color:#8A8A8F;
-                                  text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;{FNT}">
-                        Hướng viết copy
+                      <!-- body -->
+                      <div style="padding:14px 16px 16px;">
+                        <p style="margin:0 0 14px;font-size:13px;color:#6B6B70;
+                                  line-height:1.55;{FNT}">
+                          {pillar.get("angle", "")}
+                        </p>
+                        <!-- hook -->
+                        <div style="border-left:3px solid {accent};padding:8px 12px;
+                                    background:#FAFAFC;border-radius:0 8px 8px 0;margin-bottom:14px;">
+                          <div style="font-size:10px;font-weight:700;color:#8A8A8F;
+                                      letter-spacing:.5px;text-transform:uppercase;
+                                      margin-bottom:4px;{FNT}">Hook mẫu</div>
+                          <p style="margin:0;font-size:13px;font-weight:600;color:#1C1C1E;
+                                    font-style:italic;line-height:1.45;{FNT}">
+                            "{pillar.get("hook", "")}"
+                          </p>
+                        </div>
+                        <!-- copy notes -->
+                        <div style="font-size:10px;font-weight:700;color:#8A8A8F;
+                                    letter-spacing:.5px;text-transform:uppercase;
+                                    margin-bottom:8px;{FNT}">Hướng viết copy</div>
+                        {bullets_html}
                       </div>
-                      <ul style="margin:0;padding-left:16px;font-size:12.5px;color:#3A3A3C;
-                                 line-height:1.7;{FNT}">
-                        {copy_notes_html}
-                      </ul>
                     </div>
                     """, unsafe_allow_html=True)
 
