@@ -318,61 +318,75 @@ function doCopy() {{
             next_idx = st.session_state.get("pillar_refresh_index", 0)
 
             if pillars:
-                cols = st.columns(3, gap="medium")
-                for i, (col, pillar) in enumerate(zip(cols, pillars)):
+                for i, pillar in enumerate(pillars):
                     bg, accent, dark = PILLAR_CFG[i % 3]
                     is_next = (i == next_idx)
-                    left_bar = f"border-left:4px solid {accent};" if is_next else "border-left:4px solid #ECECEF;"
+                    border = f"1.5px solid {accent}" if is_next else "1.5px solid #ECECEF"
+                    shadow = f"0 0 0 3px {accent}22,0 2px 12px rgba(0,0,0,.05)" if is_next else "0 2px 8px rgba(0,0,0,.04)"
                     items = _notes_items(pillar.get("copy_notes", ""))
                     bullets_html = "".join(
-                        f'<div style="display:flex;gap:7px;margin-bottom:6px;">'
-                        f'<span style="color:{accent};font-weight:700;flex-shrink:0;margin-top:1px;">·</span>'
+                        f'<div style="display:flex;gap:8px;margin-bottom:5px;">'
+                        f'<span style="color:{accent};font-size:14px;flex-shrink:0;line-height:1.5;">›</span>'
                         f'<span style="font-size:12.5px;color:#3A3A3C;line-height:1.6;{FNT}">{item}</span>'
                         f'</div>'
                         for item in items
                     )
-                    next_dot = (
-                        f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;'
-                        f'background:{accent};margin-left:6px;vertical-align:middle;"></span>'
+                    next_badge = (
+                        f'<span style="font-size:10px;font-weight:700;color:{accent};'
+                        f'background:{bg};padding:2px 8px;border-radius:999px;'
+                        f'letter-spacing:.4px;{FNT}">refresh tiếp theo</span>'
                     ) if is_next else ""
 
-                    col.markdown(f"""
-                    <div style="background:#fff;border-radius:16px;padding:0;
-                                overflow:hidden;border:1.5px solid #ECECEF;
-                                box-shadow:0 2px 12px rgba(0,0,0,.05);{left_bar}">
-                      <!-- top accent bar -->
-                      <div style="background:{bg};padding:14px 16px 12px;">
-                        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;">
-                          <span style="font-size:10px;font-weight:700;color:{dark};
+                    st.markdown(f"""
+                    <div style="background:#fff;border-radius:14px;border:{border};
+                                box-shadow:{shadow};margin-bottom:12px;
+                                display:flex;align-items:stretch;overflow:hidden;">
+
+                      <!-- LEFT: số + tên + angle (25%) -->
+                      <div style="background:{bg};padding:16px 20px;min-width:200px;
+                                  width:25%;flex-shrink:0;display:flex;flex-direction:column;
+                                  justify-content:center;gap:6px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                          <span style="font-size:11px;font-weight:800;color:{dark};
                                        text-transform:uppercase;letter-spacing:.6px;{FNT}">
                             Pillar {i+1}
-                          </span>{next_dot}
+                          </span>
+                          {next_badge}
                         </div>
                         <p style="margin:0;font-size:15px;font-weight:800;
                                   color:{dark};line-height:1.3;{FNT}">
                           {pillar.get("title", "")}
                         </p>
-                      </div>
-                      <!-- body -->
-                      <div style="padding:14px 16px 16px;">
-                        <p style="margin:0 0 14px;font-size:13px;color:#6B6B70;
-                                  line-height:1.55;{FNT}">
+                        <p style="margin:0;font-size:12.5px;color:{dark}CC;
+                                  line-height:1.5;{FNT}">
                           {pillar.get("angle", "")}
                         </p>
-                        <!-- hook -->
-                        <div style="border-left:3px solid {accent};padding:8px 12px;
-                                    background:#FAFAFC;border-radius:0 8px 8px 0;margin-bottom:14px;">
-                          <div style="font-size:10px;font-weight:700;color:#8A8A8F;
-                                      letter-spacing:.5px;text-transform:uppercase;
-                                      margin-bottom:4px;{FNT}">Hook mẫu</div>
-                          <p style="margin:0;font-size:13px;font-weight:600;color:#1C1C1E;
-                                    font-style:italic;line-height:1.45;{FNT}">
-                            "{pillar.get("hook", "")}"
-                          </p>
-                        </div>
-                        <!-- copy notes -->
+                      </div>
+
+                      <!-- DIVIDER -->
+                      <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
+
+                      <!-- MIDDLE: hook (35%) -->
+                      <div style="padding:16px 20px;width:35%;flex-shrink:0;
+                                  display:flex;flex-direction:column;justify-content:center;">
                         <div style="font-size:10px;font-weight:700;color:#8A8A8F;
-                                    letter-spacing:.5px;text-transform:uppercase;
+                                    text-transform:uppercase;letter-spacing:.5px;
+                                    margin-bottom:8px;{FNT}">Hook mẫu</div>
+                        <p style="margin:0;font-size:14px;font-weight:700;color:#1C1C1E;
+                                  font-style:italic;line-height:1.5;border-left:3px solid {accent};
+                                  padding-left:12px;{FNT}">
+                          "{pillar.get("hook", "")}"
+                        </p>
+                      </div>
+
+                      <!-- DIVIDER -->
+                      <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
+
+                      <!-- RIGHT: copy notes (40%) -->
+                      <div style="padding:16px 20px;flex:1;
+                                  display:flex;flex-direction:column;justify-content:center;">
+                        <div style="font-size:10px;font-weight:700;color:#8A8A8F;
+                                    text-transform:uppercase;letter-spacing:.5px;
                                     margin-bottom:8px;{FNT}">Hướng viết copy</div>
                         {bullets_html}
                       </div>
