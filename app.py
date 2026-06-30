@@ -50,7 +50,7 @@ st.markdown(f"""
              color:#1C1C1E;{FNT}">MoMo Campaign Studio</h1>
   <span style="font-size:11px;font-weight:700;color:#B0186F;background:#FCE9F2;
                padding:5px 11px;border-radius:999px;letter-spacing:.3px;
-               white-space:nowrap;{FNT}">v1</span>
+               white-space:nowrap;{FNT}">1.0.0.1</span>
 </div>
 <p style="margin:0 0 22px;font-size:15px;color:#6B6B70;line-height:1.5;{FNT}">
   Gõ tên sản phẩm/tính năng MoMo → nhận research thị trường, slogan và báo cáo campaign.
