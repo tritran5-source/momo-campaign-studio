@@ -386,8 +386,8 @@ function doCopy() {{
                 components.html(
                     '<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">'
                     f'<div style="font-family:\'Be Vietnam Pro\',sans-serif;padding:2px 0;">{cards_html}</div>',
-                    height=540,
-                    scrolling=False,
+                    height=560,
+                    scrolling=True,
                 )
 
             btn_label = f"🔄 Tạo lại Pillar {next_idx + 1} (khác bản này)"
