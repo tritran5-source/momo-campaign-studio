@@ -343,43 +343,50 @@ function doCopy() {{
 
                     cards_html += f"""
 <div style="background:#fff;border-radius:14px;border:{border};box-shadow:{shadow};
-            margin-bottom:12px;display:flex;align-items:stretch;overflow:hidden;">
-  <div style="background:{bg};padding:16px 20px;width:24%;min-width:160px;flex-shrink:0;
-              display:flex;flex-direction:column;justify-content:center;gap:6px;">
-    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
-      <span style="font-size:10px;font-weight:800;color:{dark};text-transform:uppercase;
-                   letter-spacing:.6px;">Pillar {i+1}</span>{next_badge}
-    </div>
-    <p style="margin:0;font-size:15px;font-weight:800;color:{dark};line-height:1.3;">
+            margin-bottom:10px;display:flex;align-items:flex-start;overflow:hidden;">
+
+  <!-- LEFT 22% -->
+  <div style="background:{bg};padding:14px 16px;width:22%;flex-shrink:0;box-sizing:border-box;">
+    <div style="font-size:10px;font-weight:800;color:{dark};text-transform:uppercase;
+                letter-spacing:.6px;margin-bottom:4px;">Pillar {i+1}</div>
+    {(f'<div style="font-size:10px;font-weight:600;color:{accent};margin-bottom:6px;">⟳ refresh tiếp theo</div>') if is_next else ''}
+    <div style="font-size:14px;font-weight:800;color:{dark};line-height:1.3;margin-bottom:5px;">
       {_esc(pillar.get("title",""))}
-    </p>
-    <p style="margin:0;font-size:12px;color:{dark};opacity:.75;line-height:1.5;">
+    </div>
+    <div style="font-size:11.5px;color:{dark};opacity:.7;line-height:1.45;">
       {_esc(pillar.get("angle",""))}
-    </p>
+    </div>
   </div>
-  <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
-  <div style="padding:16px 20px;width:36%;flex-shrink:0;
-              display:flex;flex-direction:column;justify-content:center;">
+
+  <!-- DIV -->
+  <div style="width:1px;background:#E8E8EC;flex-shrink:0;align-self:stretch;"></div>
+
+  <!-- MIDDLE 36% -->
+  <div style="padding:14px 16px;width:36%;flex-shrink:0;box-sizing:border-box;">
     <div style="font-size:10px;font-weight:700;color:#8A8A8F;text-transform:uppercase;
-                letter-spacing:.5px;margin-bottom:8px;">Hook mẫu</div>
-    <p style="margin:0;font-size:13.5px;font-weight:700;color:#1C1C1E;font-style:italic;
-              line-height:1.5;border-left:3px solid {accent};padding-left:12px;">
+                letter-spacing:.5px;margin-bottom:7px;">Hook mẫu</div>
+    <div style="font-size:13px;font-weight:700;color:#1C1C1E;font-style:italic;
+                line-height:1.5;border-left:3px solid {accent};padding-left:10px;">
       &ldquo;{_esc(pillar.get("hook",""))}&rdquo;
-    </p>
+    </div>
   </div>
-  <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
-  <div style="padding:16px 20px;flex:1;display:flex;flex-direction:column;justify-content:center;">
+
+  <!-- DIV -->
+  <div style="width:1px;background:#E8E8EC;flex-shrink:0;align-self:stretch;"></div>
+
+  <!-- RIGHT flex:1 -->
+  <div style="padding:14px 16px;flex:1;box-sizing:border-box;">
     <div style="font-size:10px;font-weight:700;color:#8A8A8F;text-transform:uppercase;
-                letter-spacing:.5px;margin-bottom:8px;">Hướng viết copy</div>
+                letter-spacing:.5px;margin-bottom:7px;">Hướng viết copy</div>
     {bullets}
   </div>
 </div>"""
 
                 # Render toàn bộ 3 card trong 1 lần — tránh Streamlit sanitizer loop bug
                 components.html(
-                    f'<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">'
-                    f'<div style="font-family:\'Be Vietnam Pro\',sans-serif;">{cards_html}</div>',
-                    height=len(pillars) * 175,
+                    '<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">'
+                    f'<div style="font-family:\'Be Vietnam Pro\',sans-serif;padding:2px 0;">{cards_html}</div>',
+                    height=540,
                     scrolling=False,
                 )
 
