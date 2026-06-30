@@ -352,16 +352,27 @@ function doCopy() {{
 
             btn_label = f"🔄 Tạo lại Pillar {next_idx + 1} (khác bản này)"
             if st.button(btn_label, use_container_width=True, key="refresh_pillar"):
-                prev = pillars[next_idx] if next_idx < len(pillars) else {}
-                with st.spinner(f"Đang tạo lại Pillar {next_idx + 1}..."):
-                    new_p = pipeline.refresh_one_pillar(
-                        r["insight"], r["product_name"], next_idx, prev,
-                        campaign_context=st.session_state.get("campaign_context_used", ""),
-                    )
-                new_pillars = list(pillars)
-                new_pillars[next_idx] = new_p
-                st.session_state["result"]["pillars"] = new_pillars
-                st.session_state["pillar_refresh_index"] = (next_idx + 1) % 3
+                if not pillars:
+                    # Result cũ chưa có pillars — generate fresh cả 3
+                    with st.spinner("Đang tạo 3 pillars..."):
+                        new_pillars = pipeline.generate_pillars(
+                            r["insight"], r["product_name"],
+                            campaign_context=st.session_state.get("campaign_context_used", ""),
+                        )
+                    st.session_state["result"]["pillars"] = new_pillars
+                    st.session_state["pillar_refresh_index"] = 0
+                else:
+                    prev = pillars[next_idx] if next_idx < len(pillars) else {}
+                    with st.spinner(f"Đang tạo lại Pillar {next_idx + 1}..."):
+                        new_p = pipeline.refresh_one_pillar(
+                            r["insight"], r["product_name"], next_idx, prev,
+                            campaign_context=st.session_state.get("campaign_context_used", ""),
+                        )
+                    # Pad đủ 3 slot phòng result cũ có <3 pillars
+                    new_pillars = (list(pillars) + [{}, {}, {}])[:3]
+                    new_pillars[next_idx] = new_p
+                    st.session_state["result"]["pillars"] = new_pillars
+                    st.session_state["pillar_refresh_index"] = (next_idx + 1) % 3
                 st.rerun()
 
         # ── Tab 4: Chi tiết từng agent ──────────────────────────────────────────
