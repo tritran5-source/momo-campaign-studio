@@ -156,7 +156,10 @@ with col_right:
 
     else:
         slug = re.sub(r"[^a-z0-9]+", "-", r["product_name"].lower()).strip("-") or "campaign"
-        tab1, tab2, tab3 = st.tabs(["📊 Báo cáo cuối", "🖼️ Tạo ảnh (free)", "🔍 Chi tiết từng agent"])
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "📊 Báo cáo cuối", "🖼️ Tạo ảnh (free)",
+            "🏛️ Key Pillars", "🔍 Chi tiết từng agent",
+        ])
 
         with tab1:
             st.markdown(r["report_md"])
@@ -287,7 +290,82 @@ function doCopy() {{
 }}
 </script></body></html>""", height=70, scrolling=False)
 
+        # ── Tab 3: Key Pillars ──────────────────────────────────────────────────
         with tab3:
+            pillars = r.get("pillars") or []
+            next_idx = st.session_state.get("pillar_refresh_index", 0)
+
+            PILLAR_COLORS = [
+                ("#FCE9F2", "#D6218C", "#B0186F"),  # pink
+                ("#EEF4FF", "#3B5BDB", "#2C46C2"),  # blue
+                ("#F0FFF6", "#12B886", "#0CA678"),  # green
+            ]
+
+            if pillars:
+                cols = st.columns(3, gap="medium")
+                for i, (col, pillar) in enumerate(zip(cols, pillars)):
+                    bg, accent, dark = PILLAR_COLORS[i % len(PILLAR_COLORS)]
+                    is_next = (i == next_idx)
+                    border = f"2.5px solid {accent}" if is_next else f"1.5px solid #ECECEF"
+                    ring = f"box-shadow:0 0 0 3px {accent}33,0 4px 16px rgba(0,0,0,.06);" if is_next else "box-shadow:0 4px 16px rgba(0,0,0,.04);"
+                    copy_notes_html = "".join(
+                        f'<li style="margin-bottom:4px;">{line.lstrip("•-– ").strip()}</li>'
+                        for line in str(pillar.get("copy_notes", "")).split("\n")
+                        if line.strip()
+                    )
+                    next_label = f'<div style="font-size:10px;font-weight:700;color:{accent};text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;{FNT}">🔄 refresh tiếp theo</div>' if is_next else ""
+                    col.markdown(f"""
+                    <div style="background:#fff;border-radius:18px;padding:20px 18px 18px;
+                                border:{border};{ring}min-height:260px;">
+                      {next_label}
+                      <div style="display:inline-block;font-size:10px;font-weight:700;color:{accent};
+                                  background:{bg};padding:4px 10px;border-radius:999px;
+                                  text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;{FNT}">
+                        Pillar {i+1}
+                      </div>
+                      <p style="margin:0 0 6px;font-size:15px;font-weight:800;color:#1C1C1E;{FNT}">
+                        {pillar.get('title','')}
+                      </p>
+                      <p style="margin:0 0 12px;font-size:13px;color:#6B6B70;line-height:1.5;{FNT}">
+                        {pillar.get('angle','')}
+                      </p>
+                      <div style="background:{bg};border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+                        <div style="font-size:10px;font-weight:700;color:{dark};
+                                    text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;{FNT}">
+                          Hook mẫu
+                        </div>
+                        <p style="margin:0;font-size:13px;font-weight:600;color:{dark};
+                                  font-style:italic;line-height:1.4;{FNT}">
+                          "{pillar.get('hook','')}"
+                        </p>
+                      </div>
+                      <div style="font-size:10px;font-weight:700;color:#8A8A8F;
+                                  text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;{FNT}">
+                        Hướng viết copy
+                      </div>
+                      <ul style="margin:0;padding-left:16px;font-size:12.5px;color:#3A3A3C;
+                                 line-height:1.7;{FNT}">
+                        {copy_notes_html}
+                      </ul>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            btn_label = f"🔄 Tạo lại Pillar {next_idx + 1} (khác bản này)"
+            if st.button(btn_label, use_container_width=True, key="refresh_pillar"):
+                prev = pillars[next_idx] if next_idx < len(pillars) else {}
+                with st.spinner(f"Đang tạo lại Pillar {next_idx + 1}..."):
+                    new_p = pipeline.refresh_one_pillar(
+                        r["insight"], r["product_name"], next_idx, prev,
+                        campaign_context=st.session_state.get("campaign_context_used", ""),
+                    )
+                new_pillars = list(pillars)
+                new_pillars[next_idx] = new_p
+                st.session_state["result"]["pillars"] = new_pillars
+                st.session_state["pillar_refresh_index"] = (next_idx + 1) % 3
+                st.rerun()
+
+        # ── Tab 4: Chi tiết từng agent ──────────────────────────────────────────
+        with tab4:
             st.markdown(f"""
             <div style="font-size:15px;font-weight:700;color:#1C1C1E;
                         margin-bottom:8px;{FNT}">1. Market Research Agent</div>

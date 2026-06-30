@@ -237,6 +237,69 @@ def refresh_slogan(insight: str, caption: str, product_name: str,
     return {**copy, "report_md": report_md}
 
 
+_PILLAR_SCHEMA = (
+    '{"pillars": ['
+    '{"title": "tên pillar ngắn gọn (2-4 từ tiếng Việt)", '
+    '"angle": "sub-angle / góc tiếp cận (1 câu)", '
+    '"hook": "câu hook mẫu cho pillar này (1 câu punchy tiếng Việt)", '
+    '"copy_notes": "2-3 bullet gợi ý hướng viết copy cho pillar này"}'
+    ', ...]}'
+)
+
+
+def generate_pillars(insight: str, product_name: str,
+                     campaign_context: str = "") -> list:
+    """Tạo 3 key pillars / sub-angles từ insight."""
+    context_note = f"\nBối cảnh campaign: {campaign_context.strip()}" if campaign_context.strip() else ""
+    user = (
+        f"Insight thị trường:\n\"\"\"{insight}\"\"\"\n"
+        f"Sản phẩm: {product_name}.{context_note}\n\n"
+        "Hãy tạo ĐÚNG 3 key pillar / sub-angle marketing KHÁC NHAU hoàn toàn — "
+        "mỗi pillar tiếp cận từ một góc độ tâm lý hoặc hành vi khác nhau "
+        "(VD: Emotional / Rational / Social; hoặc Fear-of-missing-out / Aspiration / Proof; "
+        "hoặc bất kỳ framework nào phù hợp nhất với insight).\n"
+        f"Trả về DUY NHẤT JSON hợp lệ theo schema:\n{_PILLAR_SCHEMA}"
+    )
+    text = _chat(messages=[{"role": "user", "content": user}], temperature=0.75)
+    parsed = _parse_json(text)
+    raw = parsed.get("pillars", [])
+    # Đảm bảo luôn có đúng 3 pillars
+    while len(raw) < 3:
+        raw.append({"title": f"Pillar {len(raw)+1}", "angle": "", "hook": "", "copy_notes": ""})
+    return raw[:3]
+
+
+def refresh_one_pillar(insight: str, product_name: str, pillar_index: int,
+                       prev_pillar: dict, campaign_context: str = "") -> dict:
+    """Tạo lại 1 pillar (theo index) — khác với bản prev_pillar."""
+    avoid = (
+        f"\n\nQUAN TRỌNG: Pillar sau là bản CŨ tại vị trí {pillar_index + 1} — "
+        f"KHÔNG được dùng cùng title, angle, hook hay concept:\n"
+        f"Title cũ: {prev_pillar.get('title','')}\n"
+        f"Angle cũ: {prev_pillar.get('angle','')}\n"
+        "Hãy chọn một góc tâm lý / hành vi HOÀN TOÀN KHÁC."
+    )
+    context_note = f"\nBối cảnh campaign: {campaign_context.strip()}" if campaign_context.strip() else ""
+    user = (
+        f"Insight thị trường:\n\"\"\"{insight}\"\"\"\n"
+        f"Sản phẩm: {product_name}.{context_note}{avoid}\n\n"
+        f"Tạo 1 pillar mới thay thế cho vị trí {pillar_index + 1}.\n"
+        "Trả về DUY NHẤT JSON của 1 pillar (không bọc array):\n"
+        '{"title": "...", "angle": "...", "hook": "...", "copy_notes": "..."}'
+    )
+    text = _chat(messages=[{"role": "user", "content": user}], temperature=0.95)
+    parsed = _parse_json(text)
+    # Nếu AI trả về {"pillars": [...]} thay vì object đơn
+    if "pillars" in parsed and isinstance(parsed["pillars"], list) and parsed["pillars"]:
+        parsed = parsed["pillars"][0]
+    return {
+        "title": parsed.get("title", f"Pillar {pillar_index + 1}"),
+        "angle": parsed.get("angle", ""),
+        "hook": parsed.get("hook", ""),
+        "copy_notes": parsed.get("copy_notes", ""),
+    }
+
+
 def run_pipeline(product_name: str, campaign_context: str = "") -> dict:
     name = product_name.strip()
 
@@ -244,6 +307,8 @@ def run_pipeline(product_name: str, campaign_context: str = "") -> dict:
     brief = designer_brief(insight, name, campaign_context)
     copy = copywriter_agent(insight, brief["caption"])
     report_md = packaging_agent(insight, copy["quote"], copy["justification"], name)
+
+    pillars = generate_pillars(insight, name, campaign_context)
 
     return {
         "product_name": name,
@@ -253,4 +318,5 @@ def run_pipeline(product_name: str, campaign_context: str = "") -> dict:
         "quote": copy["quote"],
         "justification": copy["justification"],
         "report_md": report_md,
+        "pillars": pillars,
     }
