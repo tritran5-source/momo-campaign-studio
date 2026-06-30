@@ -125,6 +125,7 @@ if run_clicked:
                 st.session_state["result"] = pipeline.run_pipeline(
                     product_name, campaign_context=campaign_context
                 )
+                st.session_state["campaign_context_used"] = campaign_context
             st.session_state["error"] = None
             st.rerun()
         except Exception as e:
@@ -223,6 +224,19 @@ with col_right:
             </div>
             """, unsafe_allow_html=True)
 
+            # Refresh image prompt button
+            if st.button("🔄 Tạo lại prompt ảnh (khác bản này)", use_container_width=True,
+                         key="refresh_prompt"):
+                with st.spinner("Đang tạo prompt mới..."):
+                    brief = pipeline.refresh_image_prompt(
+                        r["insight"], r["product_name"],
+                        prev_prompt=r.get("image_prompt", ""),
+                        campaign_context=st.session_state.get("campaign_context_used", ""),
+                    )
+                st.session_state["result"]["image_prompt"] = brief["image_prompt"]
+                st.session_state["result"]["caption"] = brief["caption"]
+                st.rerun()
+
             # Functional copy button via iframe (not sanitized)
             prompt_js = (r["image_prompt"]
                          .replace("\\", "\\\\")
@@ -283,8 +297,33 @@ function doCopy() {{
             <div style="font-size:15px;font-weight:700;color:#1C1C1E;
                         margin:20px 0 8px;{FNT}">3. Copywriter Agent</div>
             """, unsafe_allow_html=True)
-            st.markdown(f"**Slogan:** {r['quote']}")
-            st.caption(r["justification"])
+            st.markdown(f"""
+            <div style="background:#FAFAFC;border:1.5px solid #ECECEF;border-radius:14px;
+                        padding:15px 18px;margin-bottom:12px;">
+              <div style="font-size:11px;font-weight:700;color:#8A8A8F;
+                          text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;{FNT}">
+                Slogan đề xuất
+              </div>
+              <p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#1C1C1E;
+                        line-height:1.4;{FNT}">{r['quote']}</p>
+              <p style="margin:0;font-size:13px;color:#6B6B70;line-height:1.5;{FNT}">
+                {r['justification']}
+              </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button("🔄 Tạo lại slogan (khác bản này)", use_container_width=True,
+                         key="refresh_slogan"):
+                with st.spinner("Đang tạo slogan mới..."):
+                    new_copy = pipeline.refresh_slogan(
+                        r["insight"], r.get("caption", ""), r["product_name"],
+                        prev_quote=r.get("quote", ""),
+                        campaign_context=st.session_state.get("campaign_context_used", ""),
+                    )
+                st.session_state["result"]["quote"] = new_copy["quote"]
+                st.session_state["result"]["justification"] = new_copy["justification"]
+                st.session_state["result"]["report_md"] = new_copy["report_md"]
+                st.rerun()
 
 st.markdown(f"""
 <p style="text-align:center;margin:20px 0 0;font-size:12px;color:#8A8A8F;{FNT}">

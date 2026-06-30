@@ -186,6 +186,57 @@ def packaging_agent(insight: str, quote: str, justification: str,
 """
 
 
+def refresh_image_prompt(insight: str, product_name: str,
+                         prev_prompt: str = "", campaign_context: str = "") -> dict:
+    """Tạo lại image prompt + caption — khác với bản prev_prompt."""
+    system = "Bạn là Senior Graphic Designer tại MoMo, thiết kế cho mobile-first Việt Nam. Brand DNA bắt buộc: " + BRAND
+    avoid = (f"\n\nQUAN TRỌNG: Prompt sau đây là bản CŨ — KHÔNG được lặp lại concept, góc chụp, "
+             f"persona, hay bối cảnh giống bản cũ:\n\"\"\"{prev_prompt}\"\"\"\n"
+             "Hãy chọn một persona khác (tuổi/giới tính/trang phục khác), "
+             "bối cảnh đời thường hoàn toàn khác, và khoảnh khắc cảm xúc khác.") if prev_prompt else ""
+    context_note = f"\nBối cảnh campaign: {campaign_context.strip()}" if campaign_context.strip() else ""
+    user = (
+        f"Insight thị trường:\n\"\"\"{insight}\"\"\"\n"
+        f"Sản phẩm: {product_name}.{context_note}{avoid}\n"
+        "Trả về DUY NHẤT một JSON:\n"
+        "{\"image_prompt\": \"100-150 từ tiếng Anh, mô tả 1 ảnh PHOTOREALISTIC: "
+        "NGƯỜI VIỆT NAM THẬT đúng persona (tuổi, giới tính, biểu cảm, trang phục KHÁC bản cũ), "
+        f"smartphone RÕ gần máy ảnh, màn hình MoMo {BRAND_PINK} chiếm 30-40%, "
+        "không che màn hình, ánh sáng tự nhiên, khoảng trống cho headline, "
+        "ảnh quảng cáo thương mại cao cấp, KHÔNG hoạt hình KHÔNG giả AI\", "
+        "\"caption\": \"1 câu caption marketing tiếng Việt, ngắn và punchy, KHÁC bản cũ\"}"
+    )
+    text = _chat(
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        temperature=0.95,
+    )
+    parsed = _parse_json(text)
+    return {"image_prompt": parsed.get("image_prompt", ""), "caption": parsed.get("caption", "")}
+
+
+def refresh_slogan(insight: str, caption: str, product_name: str,
+                   prev_quote: str = "", campaign_context: str = "") -> dict:
+    """Tạo lại slogan + report — khác với bản prev_quote."""
+    avoid = (f"\n\nQUAN TRỌNG: Slogan sau là bản CŨ — KHÔNG dùng lại từ khóa, "
+             f"ý tưởng hay cấu trúc tương tự:\n\"{prev_quote}\"\n"
+             "Hãy chọn một góc nhìn cảm xúc khác, một từ khóa trung tâm khác.") if prev_quote else ""
+    instruction = (
+        f"Insight thị trường:\n\"\"\"{insight}\"\"\"\n"
+        f"Caption nháp: {caption}{avoid}\n"
+        "Trả về DUY NHẤT một JSON:\n"
+        "{\"quote\": \"slogan campaign tiếng Việt, tối đa 12 từ, PHẢI KHÁC bản cũ\", "
+        "\"justification\": \"1-2 câu vì sao slogan này khớp insight\"}"
+    )
+    text = _chat(
+        messages=[{"role": "user", "content": instruction}],
+        temperature=0.95,
+    )
+    p = _parse_json(text)
+    copy = {"quote": p.get("quote", ""), "justification": p.get("justification", "")}
+    report_md = packaging_agent(insight, copy["quote"], copy["justification"], product_name)
+    return {**copy, "report_md": report_md}
+
+
 def run_pipeline(product_name: str, campaign_context: str = "") -> dict:
     name = product_name.strip()
 
