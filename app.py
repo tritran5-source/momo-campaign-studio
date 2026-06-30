@@ -1,23 +1,20 @@
 """
-app.py — Giao diện web cho Growth PMs. KHÔNG cần mở notebook, không chạy từng cell.
-
-Chạy:  streamlit run app.py
-PM chỉ: gõ tên sản phẩm → bấm "Tạo Campaign" → nhận Báo cáo + Slogan + Image Prompt.
+app.py — giao diện web cho Growth PM.
+Chạy: streamlit run app.py
 """
 
 import os
 import re
 import sys
 
-# Đảm bảo import được tools.py / pipeline.py nằm cùng thư mục dù chạy từ đâu
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
 
-# Streamlit Cloud: đọc key từ Secrets -> env TRƯỚC khi import pipeline
+# Streamlit Cloud: secrets phải load vào env trước khi import pipeline
 try:
-    if "GEMINI_API_KEY" in st.secrets:
-        os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
+    if "OPENAI_API_KEY" in st.secrets:
+        os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 except Exception:
     pass
 
@@ -34,10 +31,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---- Input: user TỰ NHẬP tên sản phẩm ----
+# ---- Input ----
 product_name = st.text_input(
     "Tên sản phẩm / tính năng MoMo",
     placeholder="VD: Ví Trả Sau, Chuyển tiền, Túi Thần Tài, Đầu tư, Tiết kiệm...",
+)
+
+campaign_context = st.text_area(
+    "Bối cảnh campaign (tùy chọn)",
+    placeholder="VD: Campaign dịp Tết cho Gen Z, ngân sách 500M, kênh push notification + in-app, tone vui tươi...",
+    height=80,
 )
 
 if st.button("🚀 Tạo Campaign", type="primary", use_container_width=True):
@@ -46,15 +49,17 @@ if st.button("🚀 Tạo Campaign", type="primary", use_container_width=True):
     else:
         try:
             with st.spinner("Đang chạy 4 agent: research → design → copywriter → packaging ..."):
-                st.session_state["result"] = pipeline.run_pipeline(product_name)
+                st.session_state["result"] = pipeline.run_pipeline(
+                    product_name, campaign_context=campaign_context
+                )
             st.session_state["error"] = None
         except Exception as e:
             st.session_state["error"] = str(e)
             st.session_state["result"] = None
 
-# ---- Lỗi (vd Gemini quá tải / hết quota tạm) ----
+# ---- Lỗi ----
 if st.session_state.get("error"):
-    st.error(f"Có lỗi khi gọi Gemini: {st.session_state['error'][:300]}\n\nThử bấm lại sau vài giây.")
+    st.error(f"Có lỗi khi gọi OpenAI: {st.session_state['error'][:300]}\n\nThử bấm lại sau vài giây.")
 
 # ---- Kết quả ----
 r = st.session_state.get("result")
@@ -76,10 +81,10 @@ if r:
 
     with tab2:
         st.write(f"**Caption đề xuất:** {r['caption']}")
-        st.write(
-            "Dán prompt dưới đây vào "
+        st.info(
+            "📋 **Bấm icon copy ở góc trên phải ↗ của khung dưới** — rồi dán vào "
             "[ChatGPT](https://chatgpt.com) hoặc [Gemini](https://gemini.google.com) "
-            "để tạo ảnh **miễn phí**, rồi dùng cho campaign:"
+            "để tạo ảnh **miễn phí** cho campaign:"
         )
         st.code(r["image_prompt"], language=None)
 
