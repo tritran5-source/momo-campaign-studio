@@ -318,80 +318,70 @@ function doCopy() {{
             next_idx = st.session_state.get("pillar_refresh_index", 0)
 
             if pillars:
+                def _esc(s):
+                    return str(s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
+
+                cards_html = ""
                 for i, pillar in enumerate(pillars):
                     bg, accent, dark = PILLAR_CFG[i % 3]
                     is_next = (i == next_idx)
                     border = f"1.5px solid {accent}" if is_next else "1.5px solid #ECECEF"
-                    shadow = f"0 0 0 3px {accent}22,0 2px 12px rgba(0,0,0,.05)" if is_next else "0 2px 8px rgba(0,0,0,.04)"
+                    shadow = "0 0 0 3px {a}22,0 2px 10px rgba(0,0,0,.05)".format(a=accent) if is_next else "0 2px 8px rgba(0,0,0,.04)"
                     items = _notes_items(pillar.get("copy_notes", ""))
-                    bullets_html = "".join(
-                        f'<div style="display:flex;gap:8px;margin-bottom:5px;">'
-                        f'<span style="color:{accent};font-size:14px;flex-shrink:0;line-height:1.5;">›</span>'
-                        f'<span style="font-size:12.5px;color:#3A3A3C;line-height:1.6;{FNT}">{item}</span>'
+                    bullets = "".join(
+                        f'<div style="display:flex;gap:7px;margin-bottom:5px;">'
+                        f'<span style="color:{accent};font-size:13px;flex-shrink:0;line-height:1.6;font-weight:700;">›</span>'
+                        f'<span style="font-size:12.5px;color:#3A3A3C;line-height:1.6;">{_esc(item)}</span>'
                         f'</div>'
                         for item in items
                     )
                     next_badge = (
                         f'<span style="font-size:10px;font-weight:700;color:{accent};'
-                        f'background:{bg};padding:2px 8px;border-radius:999px;'
-                        f'letter-spacing:.4px;{FNT}">refresh tiếp theo</span>'
+                        f'background:{bg};padding:2px 8px;border-radius:999px;margin-left:6px;">'
+                        f'refresh tiếp theo</span>'
                     ) if is_next else ""
 
-                    st.markdown(f"""
-                    <div style="background:#fff;border-radius:14px;border:{border};
-                                box-shadow:{shadow};margin-bottom:12px;
-                                display:flex;align-items:stretch;overflow:hidden;">
+                    cards_html += f"""
+<div style="background:#fff;border-radius:14px;border:{border};box-shadow:{shadow};
+            margin-bottom:12px;display:flex;align-items:stretch;overflow:hidden;">
+  <div style="background:{bg};padding:16px 20px;width:24%;min-width:160px;flex-shrink:0;
+              display:flex;flex-direction:column;justify-content:center;gap:6px;">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+      <span style="font-size:10px;font-weight:800;color:{dark};text-transform:uppercase;
+                   letter-spacing:.6px;">Pillar {i+1}</span>{next_badge}
+    </div>
+    <p style="margin:0;font-size:15px;font-weight:800;color:{dark};line-height:1.3;">
+      {_esc(pillar.get("title",""))}
+    </p>
+    <p style="margin:0;font-size:12px;color:{dark};opacity:.75;line-height:1.5;">
+      {_esc(pillar.get("angle",""))}
+    </p>
+  </div>
+  <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
+  <div style="padding:16px 20px;width:36%;flex-shrink:0;
+              display:flex;flex-direction:column;justify-content:center;">
+    <div style="font-size:10px;font-weight:700;color:#8A8A8F;text-transform:uppercase;
+                letter-spacing:.5px;margin-bottom:8px;">Hook mẫu</div>
+    <p style="margin:0;font-size:13.5px;font-weight:700;color:#1C1C1E;font-style:italic;
+              line-height:1.5;border-left:3px solid {accent};padding-left:12px;">
+      &ldquo;{_esc(pillar.get("hook",""))}&rdquo;
+    </p>
+  </div>
+  <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
+  <div style="padding:16px 20px;flex:1;display:flex;flex-direction:column;justify-content:center;">
+    <div style="font-size:10px;font-weight:700;color:#8A8A8F;text-transform:uppercase;
+                letter-spacing:.5px;margin-bottom:8px;">Hướng viết copy</div>
+    {bullets}
+  </div>
+</div>"""
 
-                      <!-- LEFT: số + tên + angle (25%) -->
-                      <div style="background:{bg};padding:16px 20px;min-width:200px;
-                                  width:25%;flex-shrink:0;display:flex;flex-direction:column;
-                                  justify-content:center;gap:6px;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                          <span style="font-size:11px;font-weight:800;color:{dark};
-                                       text-transform:uppercase;letter-spacing:.6px;{FNT}">
-                            Pillar {i+1}
-                          </span>
-                          {next_badge}
-                        </div>
-                        <p style="margin:0;font-size:15px;font-weight:800;
-                                  color:{dark};line-height:1.3;{FNT}">
-                          {pillar.get("title", "")}
-                        </p>
-                        <p style="margin:0;font-size:12.5px;color:{dark}CC;
-                                  line-height:1.5;{FNT}">
-                          {pillar.get("angle", "")}
-                        </p>
-                      </div>
-
-                      <!-- DIVIDER -->
-                      <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
-
-                      <!-- MIDDLE: hook (35%) -->
-                      <div style="padding:16px 20px;width:35%;flex-shrink:0;
-                                  display:flex;flex-direction:column;justify-content:center;">
-                        <div style="font-size:10px;font-weight:700;color:#8A8A8F;
-                                    text-transform:uppercase;letter-spacing:.5px;
-                                    margin-bottom:8px;{FNT}">Hook mẫu</div>
-                        <p style="margin:0;font-size:14px;font-weight:700;color:#1C1C1E;
-                                  font-style:italic;line-height:1.5;border-left:3px solid {accent};
-                                  padding-left:12px;{FNT}">
-                          "{pillar.get("hook", "")}"
-                        </p>
-                      </div>
-
-                      <!-- DIVIDER -->
-                      <div style="width:1px;background:#ECECEF;flex-shrink:0;"></div>
-
-                      <!-- RIGHT: copy notes (40%) -->
-                      <div style="padding:16px 20px;flex:1;
-                                  display:flex;flex-direction:column;justify-content:center;">
-                        <div style="font-size:10px;font-weight:700;color:#8A8A8F;
-                                    text-transform:uppercase;letter-spacing:.5px;
-                                    margin-bottom:8px;{FNT}">Hướng viết copy</div>
-                        {bullets_html}
-                      </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                # Render toàn bộ 3 card trong 1 lần — tránh Streamlit sanitizer loop bug
+                components.html(
+                    f'<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">'
+                    f'<div style="font-family:\'Be Vietnam Pro\',sans-serif;">{cards_html}</div>',
+                    height=len(pillars) * 175,
+                    scrolling=False,
+                )
 
             btn_label = f"🔄 Tạo lại Pillar {next_idx + 1} (khác bản này)"
             if st.button(btn_label, use_container_width=True, key="refresh_pillar"):
